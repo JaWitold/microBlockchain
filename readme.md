@@ -21,11 +21,13 @@ Before running the application, please ensure that you have the following tools 
 - Docker Compose
 - Rust
 - Python 3
+    - yaml module (`pip3 install pyyaml`)
 - Node.js v18 or higher
+- Makefile (optional, commands specified in the Makefile can be run manually)
 
 *Please note that on Windows, it is recommended to run this application using WSL2 to ensure that all dependencies are properly configured.*
 
-To build and run the containers, you can use the included Makefile. First, navigate to the root directory of the project in your terminal. Then, run the following command:
+To successfully build and run the containers, ensure that Docker is running on your system. Open your terminal and navigate to the root directory of the project. From there, execute the following command using the provided Makefile:
 
 ``` bash
 make n=3

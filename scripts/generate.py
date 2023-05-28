@@ -1,7 +1,12 @@
 import yaml
 import sys
 
-def generate_docker_compose(n: int):
+def generate_docker_compose(n: int, prefixes: dict = {
+    "rust": "rusty_miner",
+    "redis": "redis",
+    "rabbitmq": "rabbitmq",
+    "nextjs": "nextjs" }
+):
     if not isinstance(n, int) or n <= 0 or n >= 240:
         print("Error: n must be a positive integer less than 240")
         return
@@ -28,10 +33,11 @@ def generate_docker_compose(n: int):
     }
 
     for i in range(1, n+1): 
-        miner_node_name = f"rusty_miner_{i}"
-        redis_node_name = f"redis_{i}"
-        rabbitmq_node_name = f"rabbitmq_{i}"
-        nextjs_node_name = f"next_{i}"
+        # Use prefixes["rust"]
+        miner_node_name = f"{prefixes['rust']}_{i}"
+        redis_node_name = f"{prefixes['redis']}_{i}"
+        rabbitmq_node_name = f"{prefixes['rabbitmq']}_{i}"
+        nextjs_node_name = f"{prefixes['nextjs']}_{i}"
         internal_network_name = f"blockchain-internal-app-network-{i}"
 
         # miner
@@ -150,6 +156,16 @@ if __name__ == '__main__':
     else:
         try:
             n = int(sys.argv[1])
-            generate_docker_compose(n)
+            prefixes = {
+                "rust": sys.argv[2],
+                "redis": sys.argv[3],
+                "rabbitmq": sys.argv[4],
+                "nextjs": sys.argv[5]
+            }
+            generate_docker_compose(n, prefixes)
         except ValueError:
             print('Error: n must be an integer')
+        except IndexError:
+            print('No prefixes provided, using default prefixes:' \
+                  'rusty_miner", "redis", "rabbitmq", "nextjs"')
+            generate_docker_compose(n)
