@@ -16,6 +16,7 @@ pub static KEYS: Lazy<identity::Keypair> = Lazy::new(identity::Keypair::generate
 pub static PEER_ID: Lazy<PeerId> = Lazy::new(|| PeerId::from(KEYS.public()));
 pub static CHAIN_TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("chains"));
 pub static BLOCK_TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("blocks"));
+pub static DATA_TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("data"));
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChainResponse {
@@ -32,6 +33,8 @@ pub enum EventType {
     LocalChainResponse(ChainResponse),
     // Input(String),
     Init,
+    Consume,
+    Mine(String),
 }
 
 #[derive(NetworkBehaviour)]
@@ -43,6 +46,8 @@ pub struct AppBehaviour {
     #[behaviour(ignore)]
     pub init_sender: mpsc::UnboundedSender<bool>,
     #[behaviour(ignore)]
+    pub mine_sender: mpsc::UnboundedSender<String>,
+    #[behaviour(ignore)]
     pub app: App,
 }
 
@@ -51,6 +56,7 @@ impl AppBehaviour {
         app: App,
         response_sender: mpsc::UnboundedSender<ChainResponse>,
         init_sender: mpsc::UnboundedSender<bool>,
+        mine_sender: mpsc::UnboundedSender<String>,
     ) -> Self {
         let mut behaviour = Self {
             app,
@@ -60,9 +66,11 @@ impl AppBehaviour {
                 .expect("can create mdns"),
             response_sender,
             init_sender,
+            mine_sender,
         };
         behaviour.floodsub.subscribe(CHAIN_TOPIC.clone());
         behaviour.floodsub.subscribe(BLOCK_TOPIC.clone());
+        behaviour.floodsub.subscribe(DATA_TOPIC.clone());
 
         behaviour
     }
@@ -93,6 +101,11 @@ impl NetworkBehaviourEventProcess<FloodsubEvent> for AppBehaviour {
             } else if let Ok(block) = serde_json::from_slice::<Block>(&msg.data) {
                 info!("received new block from {}", msg.source.to_string());
                 self.app.try_add_block(block);
+            } else if let Ok(data) = serde_json::from_slice::<String>(&msg.data) {
+                info!("received new data from {}", msg.source.to_string());
+                if let Err(e) = self.mine_sender.send(data) {
+                    error!("error sending response via channel, {}", e);
+                }
             }
         }
     }
@@ -140,7 +153,6 @@ pub fn get_list_peers(swarm: &Swarm<AppBehaviour>) -> Vec<String> {
 //         serde_json::to_string_pretty(&swarm.behaviour().app.blocks).expect("can jsonify blocks");
 //     info!("{}", pretty_json);
 // }
-
 
 // //TODO broadcast records so everyone can mine it
 // pub fn handle_create_block(cmd: &str, swarm: &mut Swarm<AppBehaviour>) {
