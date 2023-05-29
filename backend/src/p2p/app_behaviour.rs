@@ -1,15 +1,14 @@
-use super::{App, Block};
+use crate::mining_and_blocks::{app::App, block::Block};
 use libp2p::{
     floodsub::{Floodsub, FloodsubEvent, Topic},
     identity,
     mdns::{Mdns, MdnsEvent},
-    swarm::{NetworkBehaviourEventProcess, Swarm},
+    swarm::{NetworkBehaviourEventProcess},
     NetworkBehaviour, PeerId,
 };
 use log::{error, info};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use tokio::sync::mpsc;
 
 pub static KEYS: Lazy<identity::Keypair> = Lazy::new(identity::Keypair::generate_ed25519);
@@ -33,7 +32,7 @@ pub enum EventType {
     LocalChainResponse(ChainResponse),
     // Input(String),
     Init,
-    Consume,
+    ConsumeUserData,
     Mine(String),
 }
 
@@ -131,48 +130,3 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for AppBehaviour {
         }
     }
 }
-
-pub fn get_list_peers(swarm: &Swarm<AppBehaviour>) -> Vec<String> {
-    info!("Discovered Peers:");
-    let nodes = swarm.behaviour().mdns.discovered_nodes();
-    let mut unique_peers = HashSet::new();
-    for peer in nodes {
-        unique_peers.insert(peer);
-    }
-    unique_peers.iter().map(|p| p.to_string()).collect()
-}
-
-// pub fn handle_print_peers(swarm: &Swarm<AppBehaviour>) {
-//     let peers = get_list_peers(swarm);
-//     peers.iter().for_each(|p| info!("{}", p));
-// }
-
-// pub fn handle_print_chain(swarm: &Swarm<AppBehaviour>) {
-//     info!("Local Blockchain:");
-//     let pretty_json =
-//         serde_json::to_string_pretty(&swarm.behaviour().app.blocks).expect("can jsonify blocks");
-//     info!("{}", pretty_json);
-// }
-
-// //TODO broadcast records so everyone can mine it
-// pub fn handle_create_block(cmd: &str, swarm: &mut Swarm<AppBehaviour>) {
-//     if let Some(data) = cmd.strip_prefix("create b") {
-//         let behaviour = swarm.behaviour_mut();
-//         let latest_block = behaviour
-//             .app
-//             .blocks
-//             .last()
-//             .expect("there is at least one block");
-//         let block = Block::new(
-//             latest_block.id + 1,
-//             latest_block.hash.clone(),
-//             data.to_owned(),
-//         );
-//         let json = serde_json::to_string(&block).expect("can jsonify request");
-//         behaviour.app.blocks.push(block);
-//         info!("broadcasting new block");
-//         behaviour
-//             .floodsub
-//             .publish(BLOCK_TOPIC.clone(), json.as_bytes());
-//     }
-// }
