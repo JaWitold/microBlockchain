@@ -136,7 +136,7 @@ def generate_docker_compose(n: int, prefixes: dict = {
         # internal network
         docker_compose["networks"][internal_network_name] = {
             "name": internal_network_name,
-            "internal": 'true',
+            "internal": True,
         }
         
         # if i != 1:

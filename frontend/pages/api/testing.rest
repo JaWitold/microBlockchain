@@ -1,0 +1,16 @@
+GET http://localhost:3001/api/redis_range?range=0
+
+###
+
+GET http://localhost:3001/api/redis_pop
+
+###
+
+GET http://localhost:3001/api/redis_push?value=11
+GET http://localhost:3001/api/redis_push?value=22
+GET http://localhost:3001/api/redis_push?value=33
+GET http://localhost:3001/api/redis_push?value=44
+
+###
+
+GET http://localhost:3001/api/rabbit_put?value=test
